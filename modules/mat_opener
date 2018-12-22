@@ -1,0 +1,95 @@
+import scipy.io as sio
+import numpy as np
+import matplotlib.pyplot as plt
+import cv2
+from skimage.segmentation import slic
+from skimage.segmentation import mark_boundaries
+from skimage.segmentation import watershed
+from skimage.segmentation import quickshift
+from skimage.filters import sobel
+from skimage.color import rgb2gray
+from skimage.util import img_as_float
+from skimage import io
+import matplotlib.pyplot as plt
+
+
+fileE = 'C:\\Users\\Sena Duman\\Desktop\\CRCHistoPhenotypes\\crchistophenotypes\\CRCHistoPhenotypes\\Classification\\img15\\img15_epithelial.mat'
+fileF = 'C:\\Users\\Sena Duman\\Desktop\\CRCHistoPhenotypes\\crchistophenotypes\\CRCHistoPhenotypes\\Classification\\img15\\img15_fibroblast.mat'
+fileI = 'C:\\Users\\Sena Duman\\Desktop\\CRCHistoPhenotypes\\crchistophenotypes\\CRCHistoPhenotypes\\Classification\\img15\\img15_inflammatory.mat'
+fileO = 'C:\\Users\\Sena Duman\\Desktop\\CRCHistoPhenotypes\\crchistophenotypes\\CRCHistoPhenotypes\\Classification\\img15\\img15_others.mat'
+img = 'C:\\Users\\Sena Duman\\Desktop\\CRCHistoPhenotypes\\crchistophenotypes\\CRCHistoPhenotypes\\Classification\\img15\\img15.bmp'
+matE = sio.loadmat(fileE)
+contentsE = matE['detection']
+contentsE = np.array(contentsE)
+contentsE = contentsE.astype(int)
+xE = contentsE[:,0]
+yE = contentsE[:,1]
+matF = sio.loadmat(fileF)
+contentsF = matF['detection']
+contentsF = np.array(contentsF)
+contentsF = contentsF.astype(int)
+xF = contentsF[:,0]
+yF = contentsF[:,1]
+matI = sio.loadmat(fileI)
+contentsI = matI['detection']
+contentsI = np.array(contentsI)
+contentsI = contentsI.astype(int)
+xI = contentsI[:,0]
+yI = contentsI[:,1]
+matO = sio.loadmat(fileO)
+contentsO = matO['detection']
+contentsO = np.array(contentsO)
+contentsO = contentsO.astype(int)
+xO = contentsO[:,0]
+yO = contentsO[:,1]
+
+
+im = plt.imread(img)
+
+implot = plt.imshow(im)
+implot = plt.scatter(xE, yE, c='cyan', s=5)
+implot = plt.scatter(xF, yF, c='r', s=5)
+implot = plt.scatter(xI, yI, c='g', s=5)
+implot = plt.scatter(xO, yO, c='b', s=5)
+plt.show()
+
+im_ = cv2.imread(img, cv2.IMREAD_GRAYSCALE)
+#cv2.imshow('',im_)
+cv2.imwrite('img75_gray.png', im_)
+(thresh, im_bw) = cv2.threshold(im_, 128, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
+cv2.imwrite('img75_bw.png', im_bw)
+#cv2.imshow('',im_bw)
+#cv2.waitKey()
+
+#im_ = np.dstack([im_, im_, im_])
+#image = img_as_float(im_)
+
+
+#gradient = sobel(rgb2gray(im_))
+#segments = watershed(im_, markers=1200, compactness=0.001)
+segments = slic(im_, n_segments=1350, compactness=0.1, enforce_connectivity=True, sigma=3)
+fig = plt.figure("Superpixels -- 500 segments")
+ax = fig.add_subplot(1, 1, 1)
+figs = ax.imshow(mark_boundaries(im_, segments, mode='inner', color=(1, 0, 0)))
+figs = plt.scatter(xE, yE, c='g', s=2)
+figs = plt.scatter(xF, yF, c='g', s=2)
+figs = plt.scatter(xI, yI, c='g', s=2)
+figs = plt.scatter(xO, yO, c='g', s=2)
+plt.axis("off")
+plt.show()
+
+
+plt.subplot(1, 3, 1)
+plt.imshow(im)
+plt.subplot(1, 3, 2)
+plt.imshow(im_, cmap='gray')
+plt.subplot(1, 3, 3)
+
+plt.scatter(xE, yE, c='r', s=2)
+plt.scatter(xF, yF, c='r', s=2)
+plt.scatter(xI, yI, c='r', s=2)
+plt.scatter(xO, yO, c='r', s=2)
+plt.imshow(im_, cmap='gray')
+plt.figure()
+plt.show()
+
