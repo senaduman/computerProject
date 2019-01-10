@@ -1,3 +1,4 @@
+#kütüphane importları
 import scipy.io as sio
 import numpy as np
 import matplotlib.pyplot as plt
@@ -12,12 +13,13 @@ from skimage.util import img_as_float
 from skimage import io
 import matplotlib.pyplot as plt
 
-
+#etiketli veri klasöründen resim ve hücre tiplerinin dosyaları
 fileE = 'C:\\Users\\Sena Duman\\Desktop\\CRCHistoPhenotypes\\crchistophenotypes\\CRCHistoPhenotypes\\Classification\\img15\\img15_epithelial.mat'
 fileF = 'C:\\Users\\Sena Duman\\Desktop\\CRCHistoPhenotypes\\crchistophenotypes\\CRCHistoPhenotypes\\Classification\\img15\\img15_fibroblast.mat'
 fileI = 'C:\\Users\\Sena Duman\\Desktop\\CRCHistoPhenotypes\\crchistophenotypes\\CRCHistoPhenotypes\\Classification\\img15\\img15_inflammatory.mat'
 fileO = 'C:\\Users\\Sena Duman\\Desktop\\CRCHistoPhenotypes\\crchistophenotypes\\CRCHistoPhenotypes\\Classification\\img15\\img15_others.mat'
 img = 'C:\\Users\\Sena Duman\\Desktop\\CRCHistoPhenotypes\\crchistophenotypes\\CRCHistoPhenotypes\\Classification\\img15\\img15.bmp'
+#mat dosyalarının içeriğinin alınması, x ve y koordinatları ayrı ayrı alınıyor
 matE = sio.loadmat(fileE)
 contentsE = matE['detection']
 contentsE = np.array(contentsE)
@@ -43,7 +45,7 @@ contentsO = contentsO.astype(int)
 xO = contentsO[:,0]
 yO = contentsO[:,1]
 
-
+#resim üstüne okunan mat dosyasındaki noktalar basılıyor, renklere göre hücre tipleri fark ediyor
 im = plt.imread(img)
 
 implot = plt.imshow(im)
@@ -53,6 +55,7 @@ implot = plt.scatter(xI, yI, c='g', s=5)
 implot = plt.scatter(xO, yO, c='b', s=5)
 plt.show()
 
+#bir denediydim bu resimleri gri tonlu, siyah beyaz okumak için burası onlar
 im_ = cv2.imread(img, cv2.IMREAD_GRAYSCALE)
 #cv2.imshow('',im_)
 cv2.imwrite('img75_gray.png', im_)
@@ -67,6 +70,8 @@ cv2.imwrite('img75_bw.png', im_bw)
 
 #gradient = sobel(rgb2gray(im_))
 #segments = watershed(im_, markers=1200, compactness=0.001)
+
+#süperpiksel uygulanması, süperpikselli resim üzerine hücre noktalarının basılmış hali
 segments = slic(im_, n_segments=1350, compactness=0.1, enforce_connectivity=True, sigma=3)
 fig = plt.figure("Superpixels -- 500 segments")
 ax = fig.add_subplot(1, 1, 1)
@@ -78,7 +83,7 @@ figs = plt.scatter(xO, yO, c='g', s=2)
 plt.axis("off")
 plt.show()
 
-
+#rapora şekil şukul olsun diye 3 figürü yan yana bastırmışım bu dursun işimize yarar
 plt.subplot(1, 3, 1)
 plt.imshow(im)
 plt.subplot(1, 3, 2)
@@ -92,4 +97,8 @@ plt.scatter(xO, yO, c='r', s=2)
 plt.imshow(im_, cmap='gray')
 plt.figure()
 plt.show()
+
+
+
+
 
