@@ -98,6 +98,49 @@ plt.imshow(im_, cmap='gray')
 plt.figure()
 plt.show()
 
+#acayip logiclerle segmentasyon
+xS = np.concatenate((xE, xF, xI, xO), axis=0)
+yS = np.concatenate((yE, yF, yI, yO), axis=0)
+maxIndex = np.max(segments)
+markedSuperpixels = np.zeros(maxIndex)
+index = 0
+segmentedImage = np.zeros((500,500), dtype=np.uint8)
+segmentsOfImage = np.zeros((500,500), dtype=np.uint8)
+while index <= maxIndex:
+    arr = np.where(segments == index)
+    arr = np.array(arr)
+    segLen = np.size(arr, axis=1)
+    dotLen = np.size(xS)
+    dotIndex = 0
+    segIndex = 0
+    skip = 0
+    while dotIndex < dotLen:
+        while segIndex < segLen and skip == 0:
+            if arr[0][segIndex] == xS[dotIndex] and arr[1][segIndex] == yS[dotIndex]:
+                i = 0
+                j = 0
+                for i in range (0, segLen):
+                    segmentedImage[arr[0][i]][arr[1][i]] = im_[arr[0][i]][arr[1][i]]
+                    segmentsOfImage[arr[0][i]][arr[1][i]] = index
+                skip = 1
+            else:
+                segIndex += 1
+                skip = 0
+        dotIndex += 1
+        segIndex = 0
+    index += 1
+np.count_nonzero(markedSuperpixels)
+
+plt.imshow(segmentedImage, cmap='gray')
+segmentedImage = mark_boundaries(segmentedImage, segmentsOfImage, mode='inner', color=(1, 0, 0))
+plt.imshow(segmentedImage, cmap='gray')
+plt.show()
+
+
+
+
+
+
 
 
 
