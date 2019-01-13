@@ -13,6 +13,35 @@ from skimage.util import img_as_float
 from skimage import io
 import matplotlib.pyplot as plt
 
+def LBP(image):
+
+    table = {0: 0, 1: 1, 2: 2, 3: 3, 4: 4, 6: 5, 7: 6, 8: 7, 12: 8, 14: 9, 15: 10, 16: 11, 24: 12, 28: 13, 30: 14, 31: 15,
+         32: 16, 48: 17, 56: 18, 60: 19, 62: 20, 63: 21, 64: 22, 96: 23, 112: 24, 120: 25, 124: 26, 126: 27, 127: 28,
+         128: 29, 129: 30, 131: 31, 135: 32, 143: 33, 159: 34, 191: 35, 192: 36, 193: 37, 195: 38, 199: 39, 207: 40,
+         223: 41, 224: 42, 225: 43, 227: 44, 231: 45, 239: 46, 240: 47, 241: 48, 243: 49, 247: 50, 248: 51, 249: 52,
+         251: 53, 252: 54, 253: 55, 254: 56, 255: 57}
+
+    histogram = [0 for i in range(59)]
+    for i in range(1, len(image) - 1):
+        for j in range(1, len(image[0]) - 1):
+            lbp = 0
+            lbp |= 1 * int(image[i - 1][j - 1] > image[i][j])
+            lbp |= 2 * int(image[i - 1][j] > image[i][j])
+            lbp |= 4 * int(image[i - 1][j + 1] > image[i][j])
+            lbp |= 8 * int(image[i][j + 1] > image[i][j])
+            lbp |= 16 * int(image[i + 1][j + 1] > image[i][j])
+            lbp |= 32 * int(image[i + 1][j] > image[i][j])
+            lbp |= 64 * int(image[i + 1][j - 1] > image[i][j])
+            lbp |= 128 * int(image[i][j - 1] > image[i][j])
+            if lbp in table:
+                histogram[table[lbp]] += 1
+            else:
+                histogram[58] += 1
+
+    return histogram
+
+
+
 #etiketli veri klasöründen resim ve hücre tiplerinin dosyaları
 fileE = 'C:\\Users\\Sena Duman\\Desktop\\CRCHistoPhenotypes\\crchistophenotypes\\CRCHistoPhenotypes\\Classification\\img15\\img15_epithelial.mat'
 fileF = 'C:\\Users\\Sena Duman\\Desktop\\CRCHistoPhenotypes\\crchistophenotypes\\CRCHistoPhenotypes\\Classification\\img15\\img15_fibroblast.mat'
@@ -24,24 +53,32 @@ matE = sio.loadmat(fileE)
 contentsE = matE['detection']
 contentsE = np.array(contentsE)
 contentsE = contentsE.astype(int)
+classesE = np.zeros(np.size(contentsE, axis=0))
+classesE[classesE == 0] = 0
 xE = contentsE[:,0]
 yE = contentsE[:,1]
 matF = sio.loadmat(fileF)
 contentsF = matF['detection']
 contentsF = np.array(contentsF)
 contentsF = contentsF.astype(int)
+classesF = np.zeros(np.size(contentsF, axis=0))
+classesF[classesF == 0] = 1
 xF = contentsF[:,0]
 yF = contentsF[:,1]
 matI = sio.loadmat(fileI)
 contentsI = matI['detection']
 contentsI = np.array(contentsI)
 contentsI = contentsI.astype(int)
+classesI = np.zeros(np.size(contentsI, axis=0))
+classesI[classesI == 0] = 2
 xI = contentsI[:,0]
 yI = contentsI[:,1]
 matO = sio.loadmat(fileO)
 contentsO = matO['detection']
 contentsO = np.array(contentsO)
 contentsO = contentsO.astype(int)
+classesO = np.zeros(np.size(contentsO, axis=0))
+classesO[classesO == 0] = 3
 xO = contentsO[:,0]
 yO = contentsO[:,1]
 
@@ -101,6 +138,7 @@ plt.show()
 #acayip logiclerle segmentasyon
 xS = np.concatenate((xE, xF, xI, xO), axis=0)
 yS = np.concatenate((yE, yF, yI, yO), axis=0)
+classes = np.concatenate((classesE, classesF, classesI, classesO), axis=0)
 maxIndex = np.max(segments)
 markedSuperpixels = np.zeros(maxIndex)
 index = 0
@@ -109,6 +147,16 @@ segmentsOfImage = np.zeros((500,500), dtype=np.uint8)
 while index <= maxIndex:
     arr = np.where(segments == index)
     arr = np.array(arr)
+
+    miny = np.min(arr[0][0:])
+    maxy = np.max(arr[0][0:])
+    minx = np.min(arr[1][0:])
+    maxx = np.max(arr[1][0:])
+    width = maxx - minx + 1
+    height = maxy - miny + 1
+    tempArr = np.zeros((height, width), dtype=np.uint8)
+    lbpVector = np.zeros(59, dtype=np.uint8)
+
     segLen = np.size(arr, axis=1)
     dotLen = np.size(xS)
     dotIndex = 0
@@ -116,12 +164,21 @@ while index <= maxIndex:
     skip = 0
     while dotIndex < dotLen:
         while segIndex < segLen and skip == 0:
-            if arr[0][segIndex] == xS[dotIndex] and arr[1][segIndex] == yS[dotIndex]:
+            if arr[1][segIndex] == xS[dotIndex] and arr[0][segIndex] == yS[dotIndex]:
                 i = 0
-                j = 0
-                for i in range (0, segLen):
+                pixelCount = 0
+                averageColour = 0
+                for i in range(0, segLen):
                     segmentedImage[arr[0][i]][arr[1][i]] = im_[arr[0][i]][arr[1][i]]
                     segmentsOfImage[arr[0][i]][arr[1][i]] = index
+                    pixelCount += segmentedImage[arr[0][i]][arr[1][i]]
+                    averageColour = int(pixelCount / segLen)
+                    tempArr[int((height - 1) / (maxy - miny) * (arr[0][i] - maxy) + (height - 1))][int((width - 1) / (maxx - minx) * (arr[1][i] - maxx) + (width - 1))] = im_[arr[0][i]][arr[1][i]]
+
+                lbpVector = LBP(tempArr)
+                lbpVector.append(averageColour)
+                lbpVector.append(int(classes[dotIndex]))
+
                 skip = 1
             else:
                 segIndex += 1
@@ -135,13 +192,3 @@ plt.imshow(segmentedImage, cmap='gray')
 segmentedImage = mark_boundaries(segmentedImage, segmentsOfImage, mode='inner', color=(1, 0, 0))
 plt.imshow(segmentedImage, cmap='gray')
 plt.show()
-
-
-
-
-
-
-
-
-
-
